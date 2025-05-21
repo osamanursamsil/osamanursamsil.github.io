@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absensi Mahasantri Pondok Pesantren Mahasiswa KH Djamaluddin Amien - Mei 2025</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @media print {
+            body {
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+            .no-print {
+                display: none;
+            }
+            .page-break {
+                page-break-after: always;
+            }
+            input, textarea {
+                border: none !important;
+            }
+            button {
+                display: none;
+            }
+            table {
+                font-size: 9pt;
+            }
+            .absence-note-icon {
+                display: none;
+            }
+            .absence-note-text {
+                display: inline !important;
+                font-size: 7pt;
+                color: #666;
+            }
+        }
+        
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        
+        th, td {
+            border: 1px solid #718096;
+            padding: 4px;
+            text-align: center;
+            font-size: 12px;
+        }
+        
+        th {
+            background-color: #e2e8f0;
+        }
+        
+        .attendance-cell {
+            width: 25px;
+            height: 25px;
+            position: relative;
+        }
+        
+        input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .editable {
+            border: 1px solid #cbd5e0;
+            background-color: #f8fafc;
+            padding: 4px;
+        }
+        
+        .percentage-high {
+            background-color: #c6f6d5;
+            color: #22543d;
+        }
+        
+        .percentage-medium {
+            background-color: #fefcbf;
+            color: #744210;
+        }
+        
+        .percentage-low {
+            background-color: #fed7d7;
+            color: #822727;
+        }
+        
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .sticky-first-col {
+            position: sticky;
+            left: 0;
+            background-color: white;
+            z-index: 5;
+        }
+        
+        .sticky-second-col {
+            position: sticky;
+            left: 40px;
+            background-color: white;
+            z-index: 5;
+        }
+        
+        .absence-note-icon {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            color: #e53e3e;
+            font-size: 10px;
+            cursor: pointer;
+            display: none;
+        }
+        
+        .absence-note-text {
+            display: none;
+        }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 100;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 11px;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 300px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 p-2">
+    <div class="max-w-full mx-auto bg-white p-4 shadow-md">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-4">
+            <div class="w-20 h-20 bg-gray-200 flex items-center justify-center rounded">
+                <span class="text-gray-500 text-sm">Logo Pesantren</span>
+            </div>
+            <div class="text-center flex-1">
+                <h1 class="text-xl font-bold text-gray-800">PONDOK PESANTREN MAHASISWA KH DJAMALUDDIN AMIEN</h1>
+                <p class="text-gray-600">Absensi Mahasantri</p>
+                <div class="mt-2">
+                    <p class="font-semibold text-lg">Bulan: Mei 2025</p>
+                </div>
+            </div>
+            <div class="w-20"></div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="mb-4 p-3 bg-blue-50 rounded no-print">
+            <h2 class="text-lg font-semibold text-blue-800 mb-2">Panel Kontrol</h2>
+            <div class="flex flex-wrap gap-3">
+                <button id="addRowBtn" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm">Tambah Mahasantri</button>
+                <button id="calculateBtn" class="bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700 text-sm">Hitung Persentase</button>
+                <button id="printBtn" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm">Cetak Absensi</button>
+                <button id="exportBtn" class="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 text-sm">Export ke Excel</button>
+                <button id="clearBtn" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm">Reset Data</button>
+            </div>
+        </div>
+
+        <!-- Absensi Halaqah Hadits -->
+        <div class="mb-8">
+            <h2 class="text-lg font-bold text-blue-800 mb-2 pb-1 border-b-2 border-blue-200">Absensi Halaqah Hadits (Maghrib - Isya) - Mei 2025</h2>
+            <div class="overflow-x-auto">
+                <table id="haditsTable" class="min-w-full bg-white">
+                    <thead>
+                        <tr class="bg-blue-100">
+                            <th rowspan="2" class="w-10 sticky-header sticky-first-col">No</th>
+                            <th rowspan="2" class="w-48 sticky-header sticky-second-col">Nama Mahasantri</th>
+                            <th colspan="31">Tanggal</th>
+                            <th rowspan="2" class="w-20 sticky-header">Persentase</th>
+                            <th rowspan="2" class="w-32 sticky-header">Catatan</th>
+                        </tr>
+                        <tr class="bg-blue-50">
+                            <!-- Generate dates 1-31 -->
+                            <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th>
+                            <th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th><th>18</th><th>19</th><th>20</th>
+                            <th>21</th><th>22</th><th>23</th><th>24</th><th>25</th><th>26</th><th>27</th><th>28</th><th>29</th><th>30</th><th>31</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data rows will be generated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Absensi Halaqah Al-Qur'an -->
+        <div class="mb-8 page-break">
+            <h2 class="text-lg font-bold text-green-800 mb-2 pb-1 border-b-2 border-green-200">Absensi Halaqah Al-Qur'an (Setelah Subuh - 06.00) - Mei 2025</h2>
+            <div class="overflow-x-auto">
+                <table id="quranTable" class="min-w-full bg-white">
+                    <thead>
+                        <tr class="bg-green-100">
+                            <th rowspan="2" class="w-10 sticky-header sticky-first-col">No</th>
+                            <th rowspan="2" class="w-48 sticky-header sticky-second-col">Nama Mahasantri</th>
+                            <th colspan="31">Tanggal</th>
+                            <th rowspan="2" class="w-20 sticky-header">Persentase</th>
+                            <th rowspan="2" class="w-32 sticky-header">Catatan</th>
+                        </tr>
+                        <tr class="bg-green-50">
+                            <!-- Generate dates 1-31 -->
+                            <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th>
+                            <th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th><th>18</th><th>19</th><th>20</th>
+                            <th>21</th><th>22</th><th>23</th><th>24</th><th>25</th><th>26</th><th>27</th><th>28</th><th>29</th><th>30</th><th>31</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data rows will be generated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Absensi Shalat 5 Waktu -->
+        <div class="mb-8 page-break">
+            <h2 class="text-lg font-bold text-amber-800 mb-2 pb-1 border-b-2 border-amber-200">Absensi Shalat 5 Waktu - Mei 2025</h2>
+            
+            <!-- Minggu 1 (1-7 Mei) -->
+            <h3 class="text-md font-semibold text-amber-700 mt-4 mb-1">Minggu 1 (1-7 Mei 2025)</h3>
+            <div class="overflow-x-auto mb-4">
+                <table id="shalatTable1" class="min-w-full bg-white">
+                    <thead>
+                        <tr class="bg-amber-100">
+                            <th rowspan="2" class="w-10">No</th>
+                            <th rowspan="2" class="w-48">Nama Mahasantri</th>
+                            <th colspan="5">1 Mei</th>
+                            <th colspan="5">2 Mei</th>
+                            <th colspan="5">3 Mei</th>
+                            <th colspan="5">4 Mei</th>
+                            <th colspan="5">5 Mei</th>
+                            <th colspan="5">6 Mei</th>
+                            <th colspan="5">7 Mei</th>
+                            <th rowspan="2" class="w-20">Persentase</th>
+                            <th rowspan="2" class="w-32">Catatan</th>
+                        </tr>
+                        <tr class="bg-amber-50">
+                            <!-- 1 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 2 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 3 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 4 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 5 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 6 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 7 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data rows will be generated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Minggu 2 (8-14 Mei) -->
+            <h3 class="text-md font-semibold text-amber-700 mt-4 mb-1">Minggu 2 (8-14 Mei 2025)</h3>
+            <div class="overflow-x-auto mb-4">
+                <table id="shalatTable2" class="min-w-full bg-white">
+                    <thead>
+                        <tr class="bg-amber-100">
+                            <th rowspan="2" class="w-10">No</th>
+                            <th rowspan="2" class="w-48">Nama Mahasantri</th>
+                            <th colspan="5">8 Mei</th>
+                            <th colspan="5">9 Mei</th>
+                            <th colspan="5">10 Mei</th>
+                            <th colspan="5">11 Mei</th>
+                            <th colspan="5">12 Mei</th>
+                            <th colspan="5">13 Mei</th>
+                            <th colspan="5">14 Mei</th>
+                            <th rowspan="2" class="w-20">Persentase</th>
+                            <th rowspan="2" class="w-32">Catatan</th>
+                        </tr>
+                        <tr class="bg-amber-50">
+                            <!-- 8 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 9 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 10 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 11 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 12 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 13 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 14 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data rows will be generated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Minggu 3 (15-21 Mei) -->
+            <h3 class="text-md font-semibold text-amber-700 mt-4 mb-1">Minggu 3 (15-21 Mei 2025)</h3>
+            <div class="overflow-x-auto mb-4">
+                <table id="shalatTable3" class="min-w-full bg-white">
+                    <thead>
+                        <tr class="bg-amber-100">
+                            <th rowspan="2" class="w-10">No</th>
+                            <th rowspan="2" class="w-48">Nama Mahasantri</th>
+                            <th colspan="5">15 Mei</th>
+                            <th colspan="5">16 Mei</th>
+                            <th colspan="5">17 Mei</th>
+                            <th colspan="5">18 Mei</th>
+                            <th colspan="5">19 Mei</th>
+                            <th colspan="5">20 Mei</th>
+                            <th colspan="5">21 Mei</th>
+                            <th rowspan="2" class="w-20">Persentase</th>
+                            <th rowspan="2" class="w-32">Catatan</th>
+                        </tr>
+                        <tr class="bg-amber-50">
+                            <!-- 15 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 16 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 17 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 18 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 19 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 20 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 21 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data rows will be generated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Minggu 4 (22-28 Mei) -->
+            <h3 class="text-md font-semibold text-amber-700 mt-4 mb-1">Minggu 4 (22-28 Mei 2025)</h3>
+            <div class="overflow-x-auto mb-4">
+                <table id="shalatTable4" class="min-w-full bg-white">
+                    <thead>
+                        <tr class="bg-amber-100">
+                            <th rowspan="2" class="w-10">No</th>
+                            <th rowspan="2" class="w-48">Nama Mahasantri</th>
+                            <th colspan="5">22 Mei</th>
+                            <th colspan="5">23 Mei</th>
+                            <th colspan="5">24 Mei</th>
+                            <th colspan="5">25 Mei</th>
+                            <th colspan="5">26 Mei</th>
+                            <th colspan="5">27 Mei</th>
+                            <th colspan="5">28 Mei</th>
+                            <th rowspan="2" class="w-20">Persentase</th>
+                            <th rowspan="2" class="w-32">Catatan</th>
+                        </tr>
+                        <tr class="bg-amber-50">
+                            <!-- 22 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 23 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 24 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 25 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 26 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 27 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 28 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data rows will be generated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Minggu 5 (29-31 Mei) -->
+            <h3 class="text-md font-semibold text-amber-700 mt-4 mb-1">Minggu 5 (29-31 Mei 2025)</h3>
+            <div class="overflow-x-auto mb-4">
+                <table id="shalatTable5" class="min-w-full bg-white">
+                    <thead>
+                        <tr class="bg-amber-100">
+                            <th rowspan="2" class="w-10">No</th>
+                            <th rowspan="2" class="w-48">Nama Mahasantri</th>
+                            <th colspan="5">29 Mei</th>
+                            <th colspan="5">30 Mei</th>
+                            <th colspan="5">31 Mei</th>
+                            <th rowspan="2" class="w-20">Persentase</th>
+                            <th rowspan="2" class="w-32">Catatan</th>
+                        </tr>
+                        <tr class="bg-amber-50">
+                            <!-- 29 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 30 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                            <!-- 31 Mei -->
+                            <th>S</th><th>D</th><th>A</th><th>M</th><th>I</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data rows will be generated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="mt-2 text-sm text-gray-600">
+                <p>Keterangan: S = Subuh, D = Dzuhur, A = Ashar, M = Maghrib, I = Isya</p>
+            </div>
+        </div>
+
+        <!-- Rekap Persentase Kehadiran -->
+        <div class="mb-8 page-break">
+            <h2 class="text-lg font-bold text-indigo-800 mb-2 pb-1 border-b-2 border-indigo-200">Rekap Persentase Kehadiran - Mei 2025</h2>
+            <div class="overflow-x-auto">
+                <table id="rekapTable" class="min-w-full bg-white">
+                    <thead>
+                        <tr class="bg-indigo-100">
+                            <th class="w-10">No</th>
+                            <th class="w-48">Nama Mahasantri</th>
+                            <th class="w-32">Halaqah Hadits</th>
+                            <th class="w-32">Halaqah Al-Qur'an</th>
+                            <th class="w-32">Shalat 5 Waktu</th>
+                            <th class="w-32">Rata-rata</th>
+                            <th class="w-48">Catatan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data rows will be generated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Keterangan Persentase -->
+        <div class="mb-6 p-4 bg-gray-50 rounded border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">Keterangan Persentase Kehadiran:</h3>
+            <div class="flex flex-wrap gap-4">
+                <div class="flex items-center">
+                    <div class="w-6 h-6 bg-green-200 mr-2"></div>
+                    <span>≥ 75% (Baik)</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-6 h-6 bg-yellow-200 mr-2"></div>
+                    <span>50% - 74% (Cukup)</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-6 h-6 bg-red-200 mr-2"></div>
+                    <span>< 50% (Kurang)</span>
+                </div>
+            </div>
+            <div class="mt-3">
+                <p class="text-sm text-gray-700"><i class="fas fa-info-circle text-blue-500"></i> Klik ikon <i class="fas fa-sticky-note text-red-500"></i> untuk menambahkan keterangan ketidakhadiran.</p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-8 flex justify-end">
+            <div class="text-center w-64">
+                <p>........................., .........................</p>
+                <p class="mt-6">Pengasuh Pondok</p>
+                <p class="mt-16">(.................................................)</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal untuk keterangan ketidakhadiran -->
+    <div id="absenceModal" class="modal">
+        <div class="modal-content">
+            <h3 class="text-lg font-semibold mb-3">Keterangan Ketidakhadiran</h3>
+            <div class="mb-3">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nama:</label>
+                <div id="absenceModalName" class="text-gray-900"></div>
+            </div>
+            <div class="mb-3">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal/Waktu:</label>
+                <div id="absenceModalDate" class="text-gray-900"></div>
+            </div>
+            <div class="mb-4">
+                <label for="absenceNote" class="block text-sm font-medium text-gray-700 mb-1">Keterangan:</label>
+                <textarea id="absenceNote" class="w-full p-2 border border-gray-300 rounded" rows="3"></textarea>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button id="absenceCancelBtn" class="px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Batal</button>
+                <button id="absenceSaveBtn" class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Updated mahasantri names
+        const mahasantriNames = [
+            "Imam Ash-Shiddiq Ibrahim",
+            "Muh. Alghazali tombongi",
+            "Muh Awal Arafah",
+            "Ilman Agfary",
+            "Habib Aminullah Aris",
+            "Whisnu Fajri Ramadhan",
+            "Sumantri",
+            "Muh. Ishak",
+            "Fauzan Fajri",
+            "Ahmad Syafi'i Arsy",
+            "Ahmad Farhan Fauzan",
+            "Hafizur Rahman",
+            "Nuryahdillah Ramadhan",
+            "Muhammad Irsan Arjun",
+            "Ibnu Hudzaifah",
+            "Yusril Salim M",
+            "Muflih Saat",
+            "Hairun",
+            "Muhammad Arief Rahman",
+            "Muhammad Fauzan Adhim",
+            "Darvin",
+            "M. Fahdir Rifaldi",
+            "Muh. Nisam",
+            "Hidayat Nur Kholis",
+            "Muh. Rukmin",
+            "Muhammad Alif Hafiz",
+            "Muh. Fadil",
+            "Muh. Shabran Syukur Umar"
+        ];
+
+        // Store all checkboxes and absence notes for each mahasantri by table
+        const allCheckboxes = {
+            hadits: [],
+            quran: [],
+            shalat1: [],
+            shalat2: [],
+            shalat3: [],
+            shalat4: [],
+            shalat5: []
+        };
+        
+        const absenceNotes = {
+            hadits: {},
+            quran: {},
+            shalat1: {},
+            shalat2: {},
+            shalat3: {},
+            shalat4: {},
+            shalat5: {}
+        };
+
+        // Current absence note being edited
+        let currentAbsenceData = {
+            tableId: '',
+            studentIndex: -1,
+            dayIndex: -1,
+            cell: null
+        };
+
+        // Function to calculate percentage class based on value
+        function getPercentageClass(percentage) {
+            if (percentage >= 75) {
+                return 'percentage-high';
+            } else if (percentage >= 50) {
+                return 'percentage-medium';
+            } else {
+                return 'percentage-low';
+            }
+        }
+
+        // Function to generate table rows for Hadits and Quran tables
+        function generateSimpleRows(tableId, checkboxesKey) {
+            const tbody = document.querySelector(`#${tableId} tbody`);
+            tbody.innerHTML = '';
+            
+            allCheckboxes[checkboxesKey] = [];
+            
+            mahasantriNames.forEach((name, index) => {
+                const row = document.createElement('tr');
+                row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                
+                // Add No column
+                const noCell = document.createElement('td');
+                noCell.textContent = index + 1;
+                if (tableId === 'haditsTable' || tableId === 'quranTable') {
+                    noCell.className = 'sticky-first-col';
+                }
+                row.appendChild(noCell);
+                
+                // Add Name column
+                const nameCell = document.createElement('td');
+                nameCell.className = 'text-left';
+                if (tableId === 'haditsTable' || tableId === 'quranTable') {
+                    nameCell.className += ' sticky-second-col';
+                }
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.className = 'w-full editable';
+                nameInput.value = name;
+                nameCell.appendChild(nameInput);
+                row.appendChild(nameCell);
+                
+                // Add attendance cells and store checkboxes
+                const checkboxes = [];
+                allCheckboxes[checkboxesKey][index] = checkboxes;
+                
+                // Initialize absence notes for this student if not exists
+                if (!absenceNotes[checkboxesKey][index]) {
+                    absenceNotes[checkboxesKey][index] = {};
+                }
+                
+                // For Hadits and Quran tables (31 cells - 31 days)
+                for (let i = 0; i < 31; i++) {
+                    const cell = document.createElement('td');
+                    cell.className = 'attendance-cell';
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.dataset.day = i;
+                    checkbox.dataset.student = index;
+                    
+                    checkbox.addEventListener('change', function() {
+                        updateAbsenceNoteIcon(this, cell, checkboxesKey, index, i);
+                    });
+                    
+                    checkboxes.push(checkbox);
+                    cell.appendChild(checkbox);
+                    
+                    // Add absence note icon
+                    const noteIcon = document.createElement('i');
+                    noteIcon.className = 'fas fa-sticky-note absence-note-icon';
+                    noteIcon.title = 'Tambah keterangan';
+                    noteIcon.dataset.day = i;
+                    noteIcon.dataset.student = index;
+                    noteIcon.dataset.table = checkboxesKey;
+                    
+                    noteIcon.addEventListener('click', function() {
+                        openAbsenceNoteModal(checkboxesKey, index, i, name, `${i+1} Mei 2025`);
+                    });
+                    
+                    cell.appendChild(noteIcon);
+                    
+                    // Add absence note text (for print)
+                    const noteText = document.createElement('span');
+                    noteText.className = 'absence-note-text';
+                    noteText.dataset.day = i;
+                    noteText.dataset.student = index;
+                    cell.appendChild(noteText);
+                    
+                    // Create tooltip for note
+                    const tooltip = document.createElement('span');
+                    tooltip.className = 'tooltiptext';
+                    noteIcon.appendChild(tooltip);
+                    
+                    row.appendChild(cell);
+                }
+                
+                // Add Percentage column
+                const percentageCell = document.createElement('td');
+                percentageCell.className = 'percentage-cell';
+                percentageCell.textContent = '0%';
+                row.appendChild(percentageCell);
+                
+                // Add Notes column
+                const notesCell = document.createElement('td');
+                const notesInput = document.createElement('textarea');
+                notesInput.className = 'w-full h-8 editable';
+                notesCell.appendChild(notesInput);
+                row.appendChild(notesCell);
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        // Function to generate table rows for Shalat tables
+        function generateShalatRows(tableId, checkboxesKey, daysCount) {
+            const tbody = document.querySelector(`#${tableId} tbody`);
+            tbody.innerHTML = '';
+            
+            allCheckboxes[checkboxesKey] = [];
+            
+            mahasantriNames.forEach((name, index) => {
+                const row = document.createElement('tr');
+                row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                
+                // Add No column
+                const noCell = document.createElement('td');
+                noCell.textContent = index + 1;
+                row.appendChild(noCell);
+                
+                // Add Name column
+                const nameCell = document.createElement('td');
+                nameCell.className = 'text-left';
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.className = 'w-full editable';
+                nameInput.value = name;
+                nameCell.appendChild(nameInput);
+                row.appendChild(nameCell);
+                
+                // Add attendance cells and store checkboxes
+                const checkboxes = [];
+                allCheckboxes[checkboxesKey][index] = checkboxes;
+                
+                // Initialize absence notes for this student if not exists
+                if (!absenceNotes[checkboxesKey][index]) {
+                    absenceNotes[checkboxesKey][index] = {};
+                }
+                
+                // Get starting day based on table ID
+                let startDay = 1;
+                if (checkboxesKey === 'shalat2') startDay = 8;
+                if (checkboxesKey === 'shalat3') startDay = 15;
+                if (checkboxesKey === 'shalat4') startDay = 22;
+                if (checkboxesKey === 'shalat5') startDay = 29;
+                
+                // For Shalat tables (5 prayers x days)
+                for (let day = 0; day < daysCount; day++) {
+                    for (let prayer = 0; prayer < 5; prayer++) {
+                        const cellIndex = day * 5 + prayer;
+                        const cell = document.createElement('td');
+                        cell.className = 'attendance-cell';
+                        
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.dataset.day = day;
+                        checkbox.dataset.prayer = prayer;
+                        checkbox.dataset.student = index;
+                        
+                        checkbox.addEventListener('change', function() {
+                            updateAbsenceNoteIcon(this, cell, checkboxesKey, index, cellIndex);
+                        });
+                        
+                        checkboxes.push(checkbox);
+                        cell.appendChild(checkbox);
+                        
+                        // Add absence note icon
+                        const noteIcon = document.createElement('i');
+                        noteIcon.className = 'fas fa-sticky-note absence-note-icon';
+                        noteIcon.title = 'Tambah keterangan';
+                        noteIcon.dataset.day = day;
+                        noteIcon.dataset.prayer = prayer;
+                        noteIcon.dataset.student = index;
+                        noteIcon.dataset.table = checkboxesKey;
+                        
+                        const prayerNames = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
+                        noteIcon.addEventListener('click', function() {
+                            openAbsenceNoteModal(
+                                checkboxesKey, 
+                                index, 
+                                cellIndex, 
+                                name, 
+                                `${startDay + day} Mei 2025 - ${prayerNames[prayer]}`
+                            );
+                        });
+                        
+                        cell.appendChild(noteIcon);
+                        
+                        // Add absence note text (for print)
+                        const noteText = document.createElement('span');
+                        noteText.className = 'absence-note-text';
+                        noteText.dataset.day = day;
+                        noteText.dataset.prayer = prayer;
+                        noteText.dataset.student = index;
+                        cell.appendChild(noteText);
+                        
+                        // Create tooltip for note
+                        const tooltip = document.createElement('span');
+                        tooltip.className = 'tooltiptext';
+                        noteIcon.appendChild(tooltip);
+                        
+                        row.appendChild(cell);
+                    }
+                }
+                
+                // Add Percentage column
+                const percentageCell = document.createElement('td');
+                percentageCell.className = 'percentage-cell';
+                percentageCell.textContent = '0%';
+                row.appendChild(percentageCell);
+                
+                // Add Notes column
+                const notesCell = document.createElement('td');
+                const notesInput = document.createElement('textarea');
+                notesInput.className = 'w-full h-8 editable';
+                notesCell.appendChild(notesInput);
+                row.appendChild(notesCell);
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        // Function to update absence note icon visibility
+        function updateAbsenceNoteIcon(checkbox, cell, tableId, studentIndex, dayIndex) {
+            const noteIcon = cell.querySelector('.absence-note-icon');
+            
+            if (!checkbox.checked) {
+                noteIcon.style.display = 'block';
+            } else {
+                noteIcon.style.display = 'none';
+                // Clear any existing note when checked
+                if (absenceNotes[tableId][studentIndex] && absenceNotes[tableId][studentIndex][dayIndex]) {
+                    delete absenceNotes[tableId][studentIndex][dayIndex];
+                    
+                    // Clear tooltip and note text
+                    const tooltip = noteIcon.querySelector('.tooltiptext');
+                    if (tooltip) tooltip.textContent = '';
+                    
+                    const noteText = cell.querySelector('.absence-note-text');
+                    if (noteText) noteText.textContent = '';
+                }
+            }
+        }
+
+        // Function to open absence note modal
+        function openAbsenceNoteModal(tableId, studentIndex, dayIndex, studentName, dateInfo) {
+            const modal = document.getElementById('absenceModal');
+            const nameElement = document.getElementById('absenceModalName');
+            const dateElement = document.getElementById('absenceModalDate');
+            const noteTextarea = document.getElementById('absenceNote');
+            
+            // Set current absence data
+            currentAbsenceData = {
+                tableId: tableId,
+                studentIndex: studentIndex,
+                dayIndex: dayIndex
+            };
+            
+            // Set modal content
+            nameElement.textContent = studentName;
+            dateElement.textContent = dateInfo;
+            
+            // Load existing note if any
+            if (absenceNotes[tableId][studentIndex] && absenceNotes[tableId][studentIndex][dayIndex]) {
+                noteTextarea.value = absenceNotes[tableId][studentIndex][dayIndex];
+            } else {
+                noteTextarea.value = '';
+            }
+            
+            // Show modal
+            modal.style.display = 'block';
+        }
+
+        // Function to save absence note
+        function saveAbsenceNote() {
+            const { tableId, studentIndex, dayIndex } = currentAbsenceData;
+            const noteText = document.getElementById('absenceNote').value.trim();
+            
+            // Save note
+            if (!absenceNotes[tableId][studentIndex]) {
+                absenceNotes[tableId][studentIndex] = {};
+            }
+            
+            if (noteText) {
+                absenceNotes[tableId][studentIndex][dayIndex] = noteText;
+                
+                // Update UI to show note exists
+                updateNoteDisplay(tableId, studentIndex, dayIndex, noteText);
+            } else {
+                // Remove note if empty
+                if (absenceNotes[tableId][studentIndex][dayIndex]) {
+                    delete absenceNotes[tableId][studentIndex][dayIndex];
+                }
+                
+                // Update UI to show no note
+                updateNoteDisplay(tableId, studentIndex, dayIndex, '');
+            }
+            
+            // Close modal
+            document.getElementById('absenceModal').style.display = 'none';
+        }
+
+        // Function to update note display in UI
+        function updateNoteDisplay(tableId, studentIndex, dayIndex, noteText) {
+            // Find the cell
+            let table, selector;
+            
+            if (tableId === 'hadits') {
+                table = document.getElementById('haditsTable');
+                selector = `td.attendance-cell:nth-child(${dayIndex + 3})`;
+            } else if (tableId === 'quran') {
+                table = document.getElementById('quranTable');
+                selector = `td.attendance-cell:nth-child(${dayIndex + 3})`;
+            } else {
+                // For shalat tables
+                const tableNum = tableId.charAt(tableId.length - 1);
+                table = document.getElementById(`shalatTable${tableNum}`);
+                selector = `td.attendance-cell:nth-child(${dayIndex + 3})`;
+            }
+            
+            if (table) {
+                const rows = table.querySelectorAll('tbody tr');
+                if (rows[studentIndex]) {
+                    const cell = rows[studentIndex].querySelector(selector);
+                    if (cell) {
+                        // Update tooltip
+                        const noteIcon = cell.querySelector('.absence-note-icon');
+                        if (noteIcon) {
+                            const tooltip = noteIcon.querySelector('.tooltiptext');
+                            if (tooltip) {
+                                tooltip.textContent = noteText;
+                            }
+                            
+                            // Change icon color if note exists
+                            if (noteText) {
+                                noteIcon.classList.add('text-blue-500');
+                                noteIcon.classList.remove('text-red-500');
+                            } else {
+                                noteIcon.classList.add('text-red-500');
+                                noteIcon.classList.remove('text-blue-500');
+                            }
+                        }
+                        
+                        // Update print note text
+                        const noteText = cell.querySelector('.absence-note-text');
+                        if (noteText) {
+                            noteText.textContent = noteText ? noteText.substring(0, 15) + (noteText.length > 15 ? '...' : '') : '';
+                        }
+                    }
+                }
+            }
+        }
+
+        // Function to generate rekap table
+        function generateRekapTable() {
+            const tbody = document.querySelector('#rekapTable tbody');
+            tbody.innerHTML = '';
+            
+            mahasantriNames.forEach((name, index) => {
+                const row = document.createElement('tr');
+                row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                
+                // Add No column
+                const noCell = document.createElement('td');
+                noCell.textContent = index + 1;
+                row.appendChild(noCell);
+                
+                // Add Name column
+                const nameCell = document.createElement('td');
+                nameCell.className = 'text-left';
+                nameCell.textContent = name;
+                row.appendChild(nameCell);
+                
+                // Add Hadits percentage
+                const haditsCell = document.createElement('td');
+                haditsCell.className = 'hadits-percentage';
+                haditsCell.textContent = '0%';
+                row.appendChild(haditsCell);
+                
+                // Add Quran percentage
+                const quranCell = document.createElement('td');
+                quranCell.className = 'quran-percentage';
+                quranCell.textContent = '0%';
+                row.appendChild(quranCell);
+                
+                // Add Shalat percentage
+                const shalatCell = document.createElement('td');
+                shalatCell.className = 'shalat-percentage';
+                shalatCell.textContent = '0%';
+                row.appendChild(shalatCell);
+                
+                // Add Average percentage
+                const avgCell = document.createElement('td');
+                avgCell.className = 'avg-percentage';
+                avgCell.textContent = '0%';
+                row.appendChild(avgCell);
+                
+                // Add Notes column
+                const notesCell = document.createElement('td');
+                const notesInput = document.createElement('textarea');
+                notesInput.className = 'w-full h-8 editable';
+                notesCell.appendChild(notesInput);
+                row.appendChild(notesCell);
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        // Function to calculate percentages for all tables
+        function calculateAllPercentages() {
+            // Calculate for Hadits
+            calculateTablePercentages('haditsTable', 'hadits');
+            
+            // Calculate for Quran
+            calculateTablePercentages('quranTable', 'quran');
+            
+            // Calculate for Shalat tables
+            calculateTablePercentages('shalatTable1', 'shalat1');
+            calculateTablePercentages('shalatTable2', 'shalat2');
+            calculateTablePercentages('shalatTable3', 'shalat3');
+            calculateTablePercentages('shalatTable4', 'shalat4');
+            calculateTablePercentages('shalatTable5', 'shalat5');
+            
+            // Calculate overall Shalat percentage and update rekap
+            updateRekapTable();
+        }
+
+        // Function to calculate percentages for a specific table
+        function calculateTablePercentages(tableId, checkboxesKey) {
+            const tbody = document.querySelector(`#${tableId} tbody`);
+            const rows = tbody.querySelectorAll('tr');
+            
+            rows.forEach((row, index) => {
+                const checkboxes = allCheckboxes[checkboxesKey][index];
+                const totalCheckboxes = checkboxes.length;
+                const checkedCount = checkboxes.filter(cb => cb.checked).length;
+                const percentage = Math.round((checkedCount / totalCheckboxes) * 100);
+                
+                const percentageCell = row.querySelector('.percentage-cell');
+                percentageCell.textContent = `${percentage}%`;
+                
+                // Remove all classes and add the appropriate one
+                percentageCell.classList.remove('percentage-high', 'percentage-medium', 'percentage-low');
+                percentageCell.classList.add(getPercentageClass(percentage));
+            });
+        }
+
+        // Function to update rekap table
+        function updateRekapTable() {
+            const rekapRows = document.querySelectorAll('#rekapTable tbody tr');
+            
+            rekapRows.forEach((row, index) => {
+                // Calculate Hadits percentage
+                const haditsCheckboxes = allCheckboxes['hadits'][index];
+                const haditsCheckedCount = haditsCheckboxes.filter(cb => cb.checked).length;
+                const haditsPercentage = Math.round((haditsCheckedCount / haditsCheckboxes.length) * 100);
+                
+                // Calculate Quran percentage
+                const quranCheckboxes = allCheckboxes['quran'][index];
+                const quranCheckedCount = quranCheckboxes.filter(cb => cb.checked).length;
+                const quranPercentage = Math.round((quranCheckedCount / quranCheckboxes.length) * 100);
+                
+                // Calculate Shalat percentage (combine all shalat tables)
+                const shalat1Checkboxes = allCheckboxes['shalat1'][index] || [];
+                const shalat2Checkboxes = allCheckboxes['shalat2'][index] || [];
+                const shalat3Checkboxes = allCheckboxes['shalat3'][index] || [];
+                const shalat4Checkboxes = allCheckboxes['shalat4'][index] || [];
+                const shalat5Checkboxes = allCheckboxes['shalat5'][index] || [];
+                
+                const allShalatCheckboxes = [
+                    ...shalat1Checkboxes, 
+                    ...shalat2Checkboxes, 
+                    ...shalat3Checkboxes, 
+                    ...shalat4Checkboxes, 
+                    ...shalat5Checkboxes
+                ];
+                
+                const shalatCheckedCount = allShalatCheckboxes.filter(cb => cb.checked).length;
+                const shalatPercentage = Math.round((shalatCheckedCount / allShalatCheckboxes.length) * 100);
+                
+                // Calculate average
+                const avgPercentage = Math.round((haditsPercentage + quranPercentage + shalatPercentage) / 3);
+                
+                // Update cells
+                const haditsCell = row.querySelector('.hadits-percentage');
+                haditsCell.textContent = `${haditsPercentage}%`;
+                haditsCell.classList.remove('percentage-high', 'percentage-medium', 'percentage-low');
+                haditsCell.classList.add(getPercentageClass(haditsPercentage));
+                
+                const quranCell = row.querySelector('.quran-percentage');
+                quranCell.textContent = `${quranPercentage}%`;
+                quranCell.classList.remove('percentage-high', 'percentage-medium', 'percentage-low');
+                quranCell.classList.add(getPercentageClass(quranPercentage));
+                
+                const shalatCell = row.querySelector('.shalat-percentage');
+                shalatCell.textContent = `${shalatPercentage}%`;
+                shalatCell.classList.remove('percentage-high', 'percentage-medium', 'percentage-low');
+                shalatCell.classList.add(getPercentageClass(shalatPercentage));
+                
+                const avgCell = row.querySelector('.avg-percentage');
+                avgCell.textContent = `${avgPercentage}%`;
+                avgCell.classList.remove('percentage-high', 'percentage-medium', 'percentage-low');
+                avgCell.classList.add(getPercentageClass(avgPercentage));
+            });
+        }
+
+        // Initialize tables
+        document.addEventListener('DOMContentLoaded', function() {
+            generateSimpleRows('haditsTable', 'hadits');
+            generateSimpleRows('quranTable', 'quran');
+            generateShalatRows('shalatTable1', 'shalat1', 7);
+            generateShalatRows('shalatTable2', 'shalat2', 7);
+            generateShalatRows('shalatTable3', 'shalat3', 7);
+            generateShalatRows('shalatTable4', 'shalat4', 7);
+            generateShalatRows('shalatTable5', 'shalat5', 3);
+            generateRekapTable();
+            
+            // Add event listeners for buttons
+            document.getElementById('printBtn').addEventListener('click', function() {
+                calculateAllPercentages();
+                window.print();
+            });
+            
+            document.getElementById('calculateBtn').addEventListener('click', function() {
+                calculateAllPercentages();
+            });
+            
+            document.getElementById('addRowBtn').addEventListener('click', function() {
+                addNewRow();
+            });
+            
+            document.getElementById('clearBtn').addEventListener('click', function() {
+                if (confirm('Apakah Anda yakin ingin menghapus semua data?')) {
+                    clearAllData();
+                }
+            });
+            
+            document.getElementById('exportBtn').addEventListener('click', function() {
+                exportToExcel();
+            });
+            
+            // Modal event listeners
+            document.getElementById('absenceCancelBtn').addEventListener('click', function() {
+                document.getElementById('absenceModal').style.display = 'none';
+            });
+            
+            document.getElementById('absenceSaveBtn').addEventListener('click', function() {
+                saveAbsenceNote();
+            });
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', function(event) {
+                const modal = document.getElementById('absenceModal');
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        });
+
+        // Function to add a new row to all tables
+        function addNewRow() {
+            const newName = prompt('Masukkan nama mahasantri baru:');
+            if (newName && newName.trim() !== '') {
+                mahasantriNames.push(newName);
+                generateSimpleRows('haditsTable', 'hadits');
+                generateSimpleRows('quranTable', 'quran');
+                generateShalatRows('shalatTable1', 'shalat1', 7);
+                generateShalatRows('shalatTable2', 'shalat2', 7);
+                generateShalatRows('shalatTable3', 'shalat3', 7);
+                generateShalatRows('shalatTable4', 'shalat4', 7);
+                generateShalatRows('shalatTable5', 'shalat5', 3);
+                generateRekapTable();
+            }
+        }
+
+        // Function to clear all data
+        function clearAllData() {
+            // Clear all checkboxes
+            for (const key in allCheckboxes) {
+                if (allCheckboxes.hasOwnProperty(key)) {
+                    allCheckboxes[key].forEach(checkboxArray => {
+                        checkboxArray.forEach(checkbox => {
+                            checkbox.checked = false;
+                        });
+                    });
+                }
+            }
+            
+            // Reset all percentage cells
+            const percentageCells = document.querySelectorAll('.percentage-cell, .hadits-percentage, .quran-percentage, .shalat-percentage, .avg-percentage');
+            percentageCells.forEach(cell => {
+                cell.textContent = '0%';
+                cell.classList.remove('percentage-high', 'percentage-medium', 'percentage-low');
+                cell.classList.add('percentage-low');
+            });
+            
+            // Clear all notes
+            const textInputs = document.querySelectorAll('textarea');
+            textInputs.forEach(input => {
+                input.value = '';
+            });
+            
+            // Clear all absence notes
+            for (const key in absenceNotes) {
+                absenceNotes[key] = {};
+            }
+            
+            // Hide all absence note icons
+            const noteIcons = document.querySelectorAll('.absence-note-icon');
+            noteIcons.forEach(icon => {
+                icon.style.display = 'block';
+                icon.classList.remove('text-blue-500');
+                icon.classList.add('text-red-500');
+                
+                const tooltip = icon.querySelector('.tooltiptext');
+                if (tooltip) tooltip.textContent = '';
+            });
+            
+            // Clear all absence note texts
+            const noteTexts = document.querySelectorAll('.absence-note-text');
+            noteTexts.forEach(text => {
+                text.textContent = '';
+            });
+        }
+
+        // Function to export to Excel (simulated)
+        function exportToExcel() {
+            alert('Fitur export ke Excel akan mengunduh data dalam format spreadsheet.\n\nCatatan: Dalam implementasi sebenarnya, ini akan mengunduh file Excel dengan semua data absensi.');
+        }
+    </script>
+</body>
+</html>
